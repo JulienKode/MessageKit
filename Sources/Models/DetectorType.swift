@@ -67,8 +67,8 @@ public enum DetectorType: Hashable {
             return 3
         case .transitInformation:
             return 4
-        case .custom:
-            return 5
+        case .custom(let pattern):
+            return pattern.hashValue
         }
     }
 
