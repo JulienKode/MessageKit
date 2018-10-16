@@ -31,12 +31,12 @@ public enum DetectorType: Hashable {
     case phoneNumber
     case url
     case transitInformation
+    case custom(pattern: String)
 
     // MARK: - Not supported yet
 
     //case mention
     //case hashtag
-    case custom(pattern: String)
 
     internal var textCheckingType: NSTextCheckingResult.CheckingType {
         switch self {
@@ -49,12 +49,12 @@ public enum DetectorType: Hashable {
         }
     }
 
-    ///The hashValue of the `Component` so we can conform to `Hashable` and be sorted.
+    ///The hashValue of the `DetectorType` so we can conform to `Hashable` and be sorted.
     public var hashValue : Int {
         return self.toInt()
     }
 
-    /// Return an 'Int' value for each `Component` type so `Component` can conform to `Hashable`
+    /// Return an 'Int' value for each `DetectorType` type so `DetectorType` can conform to `Hashable`
     private func toInt() -> Int {
         switch self {
         case .address:
