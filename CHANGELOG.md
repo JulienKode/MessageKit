@@ -8,6 +8,9 @@ The changelog for `MessageKit`. Also see the [releases](https://github.com/Messa
 
 ### Changed
 
+- Added `.custom(pattern: YOUR_PATTERN)` to `DetectorType` to manage and deal with your own regular expression.
+[#913](https://github.com/MessageKit/MessageKit/pull/913) by [@julienkode](https://github.com/julienkode).
+
 - The `MessageData.emoji` case once again uses a default font of 2x the `messageLabelFont` size.
 [#795](https://github.com/MessageKit/MessageKit/pull/795) by [@Vortec4800](https://github.com/vortec4800).
 
