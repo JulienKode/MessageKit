@@ -31,12 +31,9 @@ public enum DetectorType: Hashable {
     case phoneNumber
     case url
     case transitInformation
-    case custom(pattern: String)
-
-    // MARK: - Not supported yet
-
-    //case mention
-    //case hashtag
+    case mention
+    case hashtag
+    case custom(regex: NSRegularExpression)
 
     internal var textCheckingType: NSTextCheckingResult.CheckingType {
         switch self {
@@ -45,12 +42,12 @@ public enum DetectorType: Hashable {
         case .phoneNumber: return .phoneNumber
         case .url: return .link
         case .transitInformation: return .transitInformation
-        case .custom: return .regularExpression
+        case .custom, .hashtag, .mention: return .regularExpression
         }
     }
 
     ///The hashValue of the `DetectorType` so we can conform to `Hashable` and be sorted.
-    public var hashValue : Int {
+    public var hashValue: Int {
         return self.toInt()
     }
 
@@ -67,8 +64,12 @@ public enum DetectorType: Hashable {
             return 3
         case .transitInformation:
             return 4
-        case .custom(let pattern):
-            return pattern.hashValue
+        case .mention:
+            return 5
+        case .hashtag:
+            return 6
+        case .custom(let regex):
+            return regex.hashValue
         }
     }
 
