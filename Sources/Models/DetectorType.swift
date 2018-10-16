@@ -24,7 +24,7 @@
 
 import Foundation
 
-public enum DetectorType {
+public enum DetectorType: Hashable {
 
     case address
     case date
@@ -36,7 +36,7 @@ public enum DetectorType {
 
     //case mention
     //case hashtag
-    //case custom
+    case custom(pattern: String)
 
     internal var textCheckingType: NSTextCheckingResult.CheckingType {
         switch self {
@@ -45,6 +45,30 @@ public enum DetectorType {
         case .phoneNumber: return .phoneNumber
         case .url: return .link
         case .transitInformation: return .transitInformation
+        case .custom: return .regularExpression
+        }
+    }
+
+    ///The hashValue of the `Component` so we can conform to `Hashable` and be sorted.
+    public var hashValue : Int {
+        return self.toInt()
+    }
+
+    /// Return an 'Int' value for each `Component` type so `Component` can conform to `Hashable`
+    private func toInt() -> Int {
+        switch self {
+        case .address:
+            return 0
+        case .date:
+            return 1
+        case .phoneNumber:
+            return 2
+        case .url:
+            return 3
+        case .transitInformation:
+            return 4
+        case .custom:
+            return 5
         }
     }
 
