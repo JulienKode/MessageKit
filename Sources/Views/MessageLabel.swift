@@ -309,8 +309,9 @@ open class MessageLabel: UILabel {
 
     private func parse(text: NSAttributedString) -> [NSTextCheckingResult] {
         guard enabledDetectors.isEmpty == false else { return [] }
+        let range = NSRange(location: 0, length: text.length)
         let matches = enabledDetectors
-            .compactMap { parse($0, for: text) }
+            .compactMap { parse($0, for: text, in: range) }
             .reduce(into: [NSTextCheckingResult](), { $0.append(contentsOf: $1) })
 
         guard enabledDetectors.contains(.url) else {
@@ -337,15 +338,13 @@ open class MessageLabel: UILabel {
      
      - Returns: an array of `NSTextCheckingResult` that contains all maching for this detector or nil if it fails
      */
-    private func parse(_ detector: DetectorType, for text: NSAttributedString) -> [NSTextCheckingResult]? {
+    private func parse(_ detector: DetectorType, for text: NSAttributedString, in range: NSRange) -> [NSTextCheckingResult]? {
         switch detector {
         case .custom(let regex):
             guard let detector = try? NSRegularExpression(pattern: regex, options: .caseInsensitive) else { return nil }
-            let range = NSRange(location: 0, length: text.length)
             return detector.matches(in: text.string, options: [], range: range)
         default:
             guard let detector = try? NSDataDetector(types: detector.textCheckingType.rawValue) else { return nil }
-            let range = NSRange(location: 0, length: text.length)
             return detector.matches(in: text.string, options: [], range: range)
         }
     }
@@ -384,7 +383,7 @@ open class MessageLabel: UILabel {
                 rangesForDetectors.updateValue(ranges, forKey: .transitInformation)
             case .regularExpression:
                 guard let text = text, let regex = result.regularExpression, let range = Range(result.range, in: text) else { return }
-                let detector = DetectorType.custom(regex: regex.pattern)
+                let detector = DetectorType.custom(pattern: regex.pattern)
                 var ranges = rangesForDetectors[detector] ?? []
                 let tuple: (NSRange, MessageTextCheckingType) = (result.range, .custom(pattern: regex.pattern, match: String(text[range])))
                 ranges.append(tuple)
