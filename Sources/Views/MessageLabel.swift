@@ -473,9 +473,9 @@ open class MessageLabel: UILabel {
         case let .custom(pattern, match):
             guard let match = match else { return }
             switch detectorType {
-            case DetectorType.hashtag:
+            case .hashtag:
                 handleHashtag(match)
-            case DetectorType.mention:
+            case .mention:
                 handleHashtag(match)
             default:
                 handleCustom(pattern, match: match)
