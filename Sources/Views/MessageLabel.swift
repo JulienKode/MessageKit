@@ -134,6 +134,12 @@ open class MessageLabel: UILabel {
     open internal(set) var urlAttributes: [NSAttributedString.Key: Any] = defaultAttributes
     
     open internal(set) var transitInformationAttributes: [NSAttributedString.Key: Any] = defaultAttributes
+    
+    open internal(set) var hashtagAttributes: [NSAttributedString.Key: Any] = defaultAttributes
+    
+    open internal(set) var mentionAttributes: [NSAttributedString.Key: Any] = defaultAttributes
+
+    open internal(set) var customAttributes: [NSRegularExpression: [NSAttributedString.Key: Any]] = [:]
 
     public func setAttributes(_ attributes: [NSAttributedString.Key: Any], detector: DetectorType) {
         switch detector {
@@ -147,6 +153,12 @@ open class MessageLabel: UILabel {
             urlAttributes = attributes
         case .transitInformation:
             transitInformationAttributes = attributes
+        case .mention:
+            mentionAttributes = attributes
+        case .hashtag:
+            hashtagAttributes = attributes
+        case .custom(let regex):
+            customAttributes[regex] = attributes
         }
         if isConfiguring {
             attributesNeedUpdate = true
@@ -276,6 +288,12 @@ open class MessageLabel: UILabel {
             return urlAttributes
         case .transitInformation:
             return transitInformationAttributes
+        case .mention:
+            return mentionAttributes
+        case .hashtag:
+            return hashtagAttributes
+        case .custom(let regex):
+            return customAttributes[regex] ?? MessageLabel.defaultAttributes
         }
 
     }
@@ -301,10 +319,10 @@ open class MessageLabel: UILabel {
 
     private func parse(text: NSAttributedString) -> [NSTextCheckingResult] {
         guard enabledDetectors.isEmpty == false else { return [] }
-        let checkingTypes = enabledDetectors.reduce(0) { $0 | $1.textCheckingType.rawValue }
-        let detector = try? NSDataDetector(types: checkingTypes)
         let range = NSRange(location: 0, length: text.length)
-        let matches = detector?.matches(in: text.string, options: [], range: range) ?? []
+        let matches = enabledDetectors
+            .compactMap { parse($0, for: text, in: range) }
+            .reduce(into: [NSTextCheckingResult](), { $0.append(contentsOf: $1) })
 
         guard enabledDetectors.contains(.url) else {
             return matches
@@ -320,6 +338,24 @@ open class MessageLabel: UILabel {
         }
 
         return results
+    }
+
+    /**
+     Take a detector and apply the matching to the text
+     
+     - Parameters: detector: `DetectorType` that you want to execute
+     - Parameters: text: where we apply the regular expression
+     
+     - Returns: an array of `NSTextCheckingResult` that contains all maching for this detector or nil if it fails
+     */
+    private func parse(_ detector: DetectorType, for text: NSAttributedString, in range: NSRange) -> [NSTextCheckingResult]? {
+        switch detector {
+        case .custom(let regex):
+            return regex.matches(in: text.string, options: [], range: range)
+        default:
+            guard let detector = try? NSDataDetector(types: detector.textCheckingType.rawValue) else { return nil }
+            return detector.matches(in: text.string, options: [], range: range)
+        }
     }
 
     private func setRangesForDetectors(in checkingResults: [NSTextCheckingResult]) {
@@ -354,7 +390,13 @@ open class MessageLabel: UILabel {
                 let tuple: (NSRange, MessageTextCheckingType) = (result.range, .transitInfoComponents(result.components))
                 ranges.append(tuple)
                 rangesForDetectors.updateValue(ranges, forKey: .transitInformation)
-
+            case .regularExpression:
+                guard let text = text, let regex = result.regularExpression, let range = Range(result.range, in: text) else { return }
+                let detector = DetectorType.custom(regex: regex)
+                var ranges = rangesForDetectors[detector] ?? []
+                let tuple: (NSRange, MessageTextCheckingType) = (result.range, .custom(pattern: regex.pattern, match: String(text[range])))
+                ranges.append(tuple)
+                rangesForDetectors.updateValue(ranges, forKey: detector)
             default:
                 fatalError("Received an unrecognized NSTextCheckingResult.CheckingType")
             }
@@ -428,6 +470,16 @@ open class MessageLabel: UILabel {
                 transformedTransitInformation[key.rawValue] = value
             }
             handleTransitInformation(transformedTransitInformation)
+        case let .custom(pattern, match):
+            guard let match = match else { return }
+            switch detectorType {
+            case .hashtag:
+                handleHashtag(match)
+            case .mention:
+                handleHashtag(match)
+            default:
+                handleCustom(pattern, match: match)
+            }
         }
     }
     
@@ -450,7 +502,19 @@ open class MessageLabel: UILabel {
     private func handleTransitInformation(_ components: [String: String]) {
         delegate?.didSelectTransitInformation(components)
     }
-    
+
+    private func handleHashtag(_ hashtag: String) {
+        delegate?.didSelectHashtag(hashtag)
+    }
+
+    private func handleMention(_ mention: String) {
+        delegate?.didSelectMention(mention)
+    }
+
+    private func handleCustom(_ pattern: String, match: String) {
+        delegate?.didSelectCustom(pattern, match: match)
+    }
+
 }
 
 private enum MessageTextCheckingType {
@@ -459,4 +523,5 @@ private enum MessageTextCheckingType {
     case phoneNumber(String?)
     case link(URL?)
     case transitInfoComponents([NSTextCheckingKey: String]?)
+    case custom(pattern: String, match: String?)
 }
