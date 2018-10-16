@@ -1,3 +1,0 @@
-- Added `.custom(pattern: YOUR_PATTERN)` to `DetectorType` to manage and deal with your own regular expression.
-[#913](https://github.com/MessageKit/MessageKit/pull/913) by [@julienkode](https://github.com/julienkode).
-
