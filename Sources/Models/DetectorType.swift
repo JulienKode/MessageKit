@@ -31,9 +31,11 @@ public enum DetectorType: Hashable {
     case phoneNumber
     case url
     case transitInformation
-    case mention
-    case hashtag
     case custom(regex: NSRegularExpression)
+
+    // swiftlint:disable force_try
+    public static let hashtag = DetectorType.custom(regex: try! NSRegularExpression(pattern: "/#\\w+(.)\\w+/igm", options: []))
+    public static let mention = DetectorType.custom(regex: try! NSRegularExpression(pattern: "/@\\w+(.)\\w+/igm", options: []))
 
     internal var textCheckingType: NSTextCheckingResult.CheckingType {
         switch self {
@@ -42,7 +44,7 @@ public enum DetectorType: Hashable {
         case .phoneNumber: return .phoneNumber
         case .url: return .link
         case .transitInformation: return .transitInformation
-        case .custom, .hashtag, .mention: return .regularExpression
+        case .custom: return .regularExpression
         }
     }
 
@@ -64,10 +66,6 @@ public enum DetectorType: Hashable {
             return 3
         case .transitInformation:
             return 4
-        case .mention:
-            return 5
-        case .hashtag:
-            return 6
         case .custom(let regex):
             return regex.hashValue
         }

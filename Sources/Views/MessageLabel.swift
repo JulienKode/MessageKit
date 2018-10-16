@@ -141,10 +141,6 @@ open class MessageLabel: UILabel {
 
     open internal(set) var customAttributes: [NSRegularExpression: [NSAttributedStringKey: Any]] = [:]
 
-    private let hashtag = "/#\\w+(.)\\w+/igm"
-
-    private let mention = "/@\\w+(.)\\w+/igm"
-
     public func setAttributes(_ attributes: [NSAttributedStringKey: Any], detector: DetectorType) {
         switch detector {
         case .phoneNumber:
@@ -354,12 +350,6 @@ open class MessageLabel: UILabel {
      */
     private func parse(_ detector: DetectorType, for text: NSAttributedString, in range: NSRange) -> [NSTextCheckingResult]? {
         switch detector {
-        case .hashtag:
-            guard let detector = try? NSRegularExpression(pattern: hashtag, options: .caseInsensitive) else { return nil }
-            return detector.matches(in: text.string, options: [], range: range)
-        case .mention:
-            guard let detector = try? NSRegularExpression(pattern: mention, options: .caseInsensitive) else { return nil }
-            return detector.matches(in: text.string, options: [], range: range)
         case .custom(let regex):
             return regex.matches(in: text.string, options: [], range: range)
         default:
@@ -402,26 +392,11 @@ open class MessageLabel: UILabel {
                 rangesForDetectors.updateValue(ranges, forKey: .transitInformation)
             case .regularExpression:
                 guard let text = text, let regex = result.regularExpression, let range = Range(result.range, in: text) else { return }
-                switch regex.pattern {
-                case mention:
-                    let detector = DetectorType.mention
-                    var ranges = rangesForDetectors[.hashtag] ?? []
-                    let tuple: (NSRange, MessageTextCheckingType) = (result.range, .mention(String(text[range])))
-                    ranges.append(tuple)
-                    rangesForDetectors.updateValue(ranges, forKey: detector)
-                case hashtag:
-                    let detector = DetectorType.hashtag
-                    var ranges = rangesForDetectors[.hashtag] ?? []
-                    let tuple: (NSRange, MessageTextCheckingType) = (result.range, .hashtag(String(text[range])))
-                    ranges.append(tuple)
-                    rangesForDetectors.updateValue(ranges, forKey: detector)
-                default:
-                    let detector = DetectorType.custom(regex: regex)
-                    var ranges = rangesForDetectors[detector] ?? []
-                    let tuple: (NSRange, MessageTextCheckingType) = (result.range, .custom(pattern: regex.pattern, match: String(text[range])))
-                    ranges.append(tuple)
-                    rangesForDetectors.updateValue(ranges, forKey: detector)
-                }
+                let detector = DetectorType.custom(regex: regex)
+                var ranges = rangesForDetectors[detector] ?? []
+                let tuple: (NSRange, MessageTextCheckingType) = (result.range, .custom(pattern: regex.pattern, match: String(text[range])))
+                ranges.append(tuple)
+                rangesForDetectors.updateValue(ranges, forKey: detector)
             default:
                 fatalError("Received an unrecognized NSTextCheckingResult.CheckingType")
             }
@@ -495,15 +470,16 @@ open class MessageLabel: UILabel {
                 transformedTransitInformation[key.rawValue] = value
             }
             handleTransitInformation(transformedTransitInformation)
-        case let .custom(pattern, match) :
+        case let .custom(pattern, match):
             guard let match = match else { return }
-            handleCustom(pattern, match: match)
-        case .hashtag(let hashtag):
-            guard let hashtag = hashtag else { return }
-            handleHashtag(hashtag)
-        case .mention(let mention):
-            guard let mention = mention else { return }
-            handleMention(mention)
+            switch detectorType {
+            case DetectorType.hashtag:
+                handleHashtag(match)
+            case DetectorType.mention:
+                handleHashtag(match)
+            default:
+                handleCustom(pattern, match: match)
+            }
         }
     }
     
@@ -547,7 +523,5 @@ private enum MessageTextCheckingType {
     case phoneNumber(String?)
     case link(URL?)
     case transitInfoComponents([NSTextCheckingKey: String]?)
-    case hashtag(String?)
-    case mention(String?)
     case custom(pattern: String, match: String?)
 }
