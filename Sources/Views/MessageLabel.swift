@@ -489,7 +489,7 @@ open class MessageLabel: UILabel {
     }
 
     private func handleCustom(_ pattern: String, match: String) {
-        // delegate?.didSelectTransitInformation(components)
+        delegate?.didSelectCustom(pattern, match: match)
     }
 
 }

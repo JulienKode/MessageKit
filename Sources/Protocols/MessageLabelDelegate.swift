@@ -57,6 +57,13 @@ public protocol MessageLabelDelegate: AnyObject {
     ///   - transitInformation: The selected transit information.
     func didSelectTransitInformation(_ transitInformation: [String: String])
 
+    /// Triggered when a tap occurs on a custom regular expression
+    ///
+    /// - Parameters:
+    ///   - pattern: the pattern of the regular expression
+    ///   - match: part that match with the regular expression
+    func didSelectCustom(_ pattern: String, match: String?)
+
 }
 
 public extension MessageLabelDelegate {
@@ -70,5 +77,7 @@ public extension MessageLabelDelegate {
     func didSelectURL(_ url: URL) {}
     
     func didSelectTransitInformation(_ transitInformation: [String: String]) {}
+
+    func didSelectCustom(_ pattern: String, match: String?) {}
 
 }
