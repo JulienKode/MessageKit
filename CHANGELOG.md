@@ -6,11 +6,10 @@ The changelog for `MessageKit`. Also see the [releases](https://github.com/Messa
 
 ## Upcoming release
 
-### Changed
-
-- Added  `.hashtag`, .`mention` to detect theses pattern inside the `messageLabel`.
-- Added `.custom(pattern: YOUR_PATTERN)` to `DetectorType` to manage and deal with your own regular expression.
+- Added  `.hashtag`, .`mention` to detect theses pattern inside the `messageLabel`. We also add  `.custom(pattern: YOUR_PATTERN)` to `DetectorType` to manage and deal with your own regular expression.
 [#913](https://github.com/MessageKit/MessageKit/pull/913) by [@JulienKode](https://github.com/julienkode).
+
+### Changed
 
 - Fixed the way that the Strings and UIImages are parsed in the `InputTextView` to prevent crashes in `parseForComponents()`. 
 [#791](https://github.com/MessageKit/MessageKit/pull/791) by [@nathantannar4](https://github.com/nathantannar4)
