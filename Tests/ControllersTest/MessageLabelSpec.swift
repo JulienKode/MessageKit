@@ -38,7 +38,53 @@ final class MessageLabelSpec: QuickSpec {
             messageLabel = MessageLabel()
         }
 
-//        describe("text recognized by a DetectorType") {
+        describe("text recognized by a DetectorType") {
+
+            let mentionsList = ["@julienkode", "@facebook", "@google", "@007"]
+            let hashtagsList = ["#julienkode", "#facebook", "#google", "#007"]
+
+            context("Mention detection") {
+
+                let key = NSAttributedString.Key(rawValue: "Mention")
+                let attributes: [NSAttributedString.Key: Any] = [key: "MentionDetected"]
+
+                it("match with multiples alpha and numerics") {
+                    let text = mentionsList.joined(separator: " #test ")
+                    self.set(text: text, and: [.mention], with: attributes, to: messageLabel)
+                    let matches = self.extractCustomDetectors(for: .mention, with: messageLabel)
+                    expect(matches).to(equal(mentionsList))
+                }
+
+                it("is invalid") {
+                    let invalids = hashtagsList.joined(separator: " ")
+                    self.set(text: invalids, and: [.mention], with: attributes, to: messageLabel)
+                    let matches = self.extractCustomDetectors(for: .mention, with: messageLabel)
+                    expect(matches.count).to(equal(0))
+                }
+
+            }
+
+            context("Hashtag detection") {
+
+                let key = NSAttributedString.Key(rawValue: "Hashtag")
+                let attributes: [NSAttributedString.Key: Any] = [key: "HashtagDetected"]
+
+                it("match with multiples alpha and numerics") {
+                    let text = hashtagsList.joined(separator: " #test ")
+                    self.set(text: text, and: [.mention], with: attributes, to: messageLabel)
+                    let matches = self.extractCustomDetectors(for: .mention, with: messageLabel)
+                    expect(matches).to(equal(mentionsList))
+                }
+
+                it("is invalid") {
+                    let invalids = mentionsList.joined(separator: " ")
+                    self.set(text: invalids, and: [.mention], with: attributes, to: messageLabel)
+                    let matches = self.extractCustomDetectors(for: .mention, with: messageLabel)
+                    expect(matches.count).to(equal(0))
+                }
+
+            }
+
 //            context("address detection is enabled") {
 //                it("applies addressAttributes to text") {
 //                    let expectedColor = UIColor.blue
@@ -83,7 +129,7 @@ final class MessageLabelSpec: QuickSpec {
 //                    expect(textFont).to(equal(expectedFont))
 //                }
 //            }
-//        }
+        }
 
         describe("the synchronization between text and attributedText") {
             context("when attributedText is set to a non-nil value") {
@@ -237,6 +283,26 @@ final class MessageLabelSpec: QuickSpec {
             }
         }
     }
+
+    // MARK: - Private API for Detectors
+    private func extractCustomDetectors(for detector: DetectorType, with label: MessageLabel) -> [String] {
+        guard let detection = label.rangesForDetectors[.mention] else { return [] }
+        return detection.compactMap ({ (range, messageChecking) -> String? in
+            switch messageChecking {
+            case .custom(_, let match):
+                return match
+            default:
+                return nil
+            }
+        })
+    }
+
+    private func set(text: String, and detectors: [DetectorType], with attributes: [NSAttributedString.Key: Any], to label: MessageLabel) {
+        label.mentionAttributes = attributes
+        label.enabledDetectors = detectors
+        label.text = text
+    }
+
 }
 
 // MARK: - Helpers
