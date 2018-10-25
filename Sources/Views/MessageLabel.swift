@@ -49,8 +49,7 @@ open class MessageLabel: UILabel {
         return textStorage
     }()
 
-    // swiftlint:disable explicit_acl
-    lazy var rangesForDetectors: [DetectorType: [(NSRange, MessageTextCheckingType)]] = [:]
+    internal lazy var rangesForDetectors: [DetectorType: [(NSRange, MessageTextCheckingType)]] = [:]
     
     private var isConfiguring: Bool = false
 
